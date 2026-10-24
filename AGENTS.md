@@ -11,7 +11,8 @@ When you write or edit R code, make the first line of the first code block:
 
 ## R style
 - Tidyverse style, native pipe |>, snake_case names, <- for assignment.
-- Write TRUE and FALSE, never T and F.
+- Order treatment_arm as Control, Low_dose, High_dose in every table and
+  figure.
 - Build every path with here::here() (or here() after library(here)). Never
   use setwd() or rm(list = ls()).
 - Read CSV files with readr and explicit col_types.

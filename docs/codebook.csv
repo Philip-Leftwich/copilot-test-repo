@@ -1,0 +1,7 @@
+column,type,rule,min,max,missing_codes,unit,source
+subject_id,character,"pattern ^V[0-9]{3}$; unique; pad digits to three",,,,,data note; padding is a decision
+sex,character,"allowed M, F; recode male to M, female to F",,,,,data note; recodes are a decision
+treatment_arm,character,"allowed Control, Low_dose, High_dose; match case-insensitively",,,,,data note; case-insensitive matching is a decision
+mass_pre_g,double,,15,60,9999,g,data note
+mass_post_g,double,,15,60,9999,g,data note
+metabolic_rate_post,double,,5,30,-1,<unit>,data note; no unit given

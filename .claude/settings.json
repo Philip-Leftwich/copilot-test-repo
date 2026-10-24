@@ -18,7 +18,8 @@
       "Edit(/.posit/**)",
       "Edit(/hooks/**)",
       "Read(/.Renviron)",
-      "Read(/.env)"
+      "Read(/.env)",
+      "Edit(/tests/test_summary_functions.R)"
     ]
   }
 }

@@ -1,0 +1,9 @@
+.Rproj.user/
+.Rhistory
+.RData
+.Renviron
+.env
+Rplots.pdf
+scratch/
+outputs/*
+!outputs/.gitkeep

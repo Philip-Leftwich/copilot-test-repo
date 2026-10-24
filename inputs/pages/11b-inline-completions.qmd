@@ -1,0 +1,344 @@
+# Self-study: Inline completions {.unnumbered}
+
+```{r}
+#| include: false
+source("R/booktem_setup.R")
+source("R/my_setup.R")
+library(tidyverse)
+library(here)
+library(webexercises)
+```
+
+
+Inline completion is the simplest kind of `r glossary("assistant")`: grey
+"ghost text" appears as you type. You accept it with Tab, reject it with Esc,
+or carry on typing. By the end of this page you will know how to get useful
+suggestions more often. Load and name your data in the script above the
+cursor, then write a specific comment just before it.
+Claude Code has no inline completion, so this page uses GitHub Copilot instead.
+
+*Self-study: about 25 minutes, after the workshop day.* **Start state:** your
+workshop repository on `main`, Git pane clean, signed in to GitHub Copilot (if
+you are not, open the optional
+[GitHub Copilot box in Setting up Claude Code](11a-setup-claude-code.qmd#copilot-setup)
+first).
+
+:::{#completions-files .callout-note collapse="true"}
+## This page's files, and how it fits
+
+You work in the same **workshop repository**
+([Setting up Claude Code](11a-setup-claude-code.qmd#your-workshop-repository)),
+with the same voles data, but not with Claude Code. GitHub Copilot is needed
+only for this page; Copilot Free is enough. The code you write here is
+practice, so it goes in `scratch/`, a folder git ignores. Your Git pane stays
+clean. There is no checkpoint branch, because nothing else depends on this
+code.
+
+| File | Where it comes from | Used in |
+|---|---|---|
+| `data/raw/voles_metabolism.csv` | Shipped with the template: 72 voles, 24 per treatment arm, one missing `metabolic_rate_post` | Both activities |
+| `scratch/completions.R` | You create it, in [the first activity](#completions-setup), step 0 | Both activities |
+:::
+
+
+## Activity: The context demonstration {#completions-setup}
+
+:::{.task}
+::::{.task-header}
+The context demonstration (10 minutes)
+::::
+::::{.task-container}
+
+**Goal:** see how the code above the cursor changes Copilot's suggestion for
+the same comment, so that you know what to put in a script to get useful
+suggestions.
+
+**Start state:** your workshop repository open, signed in to GitHub Copilot.
+
+The data are `voles_metabolism.csv`: a synthetic trial in 72 voles, with
+columns `subject_id`, `sex`, `treatment_arm`, `mass_pre_g`, `mass_post_g` and
+`metabolic_rate_post`. The data are synthetic, so no model has seen this
+dataset before.
+
+**0. Check that Copilot works.** This command creates the `scratch/` folder and
+this page's practice script, and opens it:
+
+**In the R console:**
+
+```{r}
+#| eval: false
+usethis::edit_file("scratch/completions.R")
+```
+
+In `scratch/completions.R`, type `# Calculate the mean of 1 to 100`. Within a
+few seconds you should see ghost text such as `mean(1:100)`. If not, press
+Enter and wait.
+
+**1. No context.** Delete everything in `scratch/completions.R`. Type only this
+comment, then wait.
+
+**In `scratch/completions.R`:**
+
+```{r}
+#| eval: false
+# calculate the mean change in mass by treatment
+```
+
+Note the suggestion. With no data and no column names in view, the model has
+to guess.
+
+**2. Context in the file.** Empty `scratch/completions.R` again. Type the lines
+below down to `glimpse(voles)`, then run them so that `voles` is loaded. Then
+type the same comment on a new line and wait.
+
+**In `scratch/completions.R`:**
+
+```{r}
+#| eval: false
+# Voles metabolism trial: effect of treatment on body mass
+# 72 voles, three treatment arms (Control, Low_dose, High_dose), two sexes
+# Native pipe |>, tidyverse
+
+library(tidyverse)
+
+voles <- read_csv(here::here("data", "raw", "voles_metabolism.csv"))
+glimpse(voles)
+
+# calculate the mean change in mass by treatment
+```
+
+`r hide("A typical good result")`
+
+```{r, eval = FALSE}
+voles |>
+  mutate(mass_change_g = mass_post_g - mass_pre_g) |>
+  summarise(
+    mean_change = mean(mass_change_g, na.rm = TRUE),
+    .by = treatment_arm
+  )
+```
+
+The exact form varies between people and sessions.
+
+`r unhide()`
+
+Compare the two suggestions. Did the second use real column names? Did it
+compute post minus pre?
+
+**You are done when** you can say what the second suggestion had that the
+first did not.
+
+**If it goes wrong:** if no ghost text appears, check that you are signed in to
+GitHub and the set-up route for your IDE (in *Set-up routes, plans and data*,
+just after this task), then type the comment again on a new line; if
+`scratch/completions.R` stops running, *Session → Restart R* and run it from
+the top.
+
+::::
+:::
+
+:::{.callout-note collapse="true"}
+## Set-up routes, plans and data
+
+- **RStudio:** enable GitHub Copilot in RStudio's options and sign in to
+  GitHub.
+- **Positron:** choose GitHub Copilot as the completions provider (see
+  Positron's completions documentation).
+
+Copilot Free allows a limited number of completions per month (2,000 at the
+time of writing); paid plans do not meter them. Completions send the code
+around your cursor to the provider, so the disclosure points in
+[Block 3](11d-context-disclosure-autonomy.qmd) apply here too.
+:::
+
+:::{.callout-tip collapse="true"}
+## Using another tool
+
+Use one completion provider at a time, so you know which tool made each
+suggestion.
+
+**Posit AI Next Edit Suggestions** (RStudio and Positron): in RStudio, turn it
+on from the Posit Assistant toolbar button; it needs a Posit AI account. In
+Positron, choose it as the completions provider. Posit AI does not meter
+completions. Unlike Copilot, it also sees your live R session: the columns of
+loaded data frames, the functions you have defined and the packages you have
+loaded. So, in the context demonstration:
+
+- restart R (*Session → Restart R*) before step 1, so that "no context" means
+  none;
+- after step 2, keep `voles` loaded. Empty `scratch/completions.R`, then type
+  only the comment from step 1. If the suggestion now uses the real column
+  names, they came from your session, not from the file.
+
+**VS Code:** select **Use AI Features** from the Copilot icon in the Status Bar
+and sign in with GitHub. As in Positron, Copilot may also use other open tabs.
+:::
+
+
+## The context principle
+
+A suggestion can only use what is in the model's
+`r glossary("context window")` when it is made. Copilot fills that window mainly
+from the current file, and above all from the comment just before the cursor.
+In Positron it may also use other open tabs. It does not see your R session.
+
+
+## Activity: Build a small analysis
+
+:::{.task}
+::::{.task-header}
+Build a small analysis (10 minutes)
+::::
+::::{.task-container}
+
+**Goal:** extend `scratch/completions.R` into a short analysis that reruns,
+deciding on every suggestion yourself, so that no suggestion enters your code
+unchecked.
+
+**Start state:** `scratch/completions.R` with the step 2 code from the
+demonstration, and `voles` loaded.
+
+For each step, write the comment first. Then accept, modify or reject the
+suggestion. Note which you did in a comment under the code, for example
+`# modified: added n()`. The note makes you notice any suggestion you accepted
+without checking.
+
+**0. Derived column.** Add `mass_change_g` (`mass_post_g` minus `mass_pre_g`)
+to `voles` as a column. Steps 1 and 2 need it there, not only inside a
+summary.
+
+**1. Summary table.** The mean and standard deviation of `mass_change_g` by
+`treatment_arm` and `sex`, with the number of observations per cell.
+
+**2. Plot.** `mass_change_g` against `metabolic_rate_post`, coloured by
+`treatment_arm`.
+
+**You are done when** steps 0 to 2 each have a note (accepted, modified or
+rejected), and `scratch/completions.R`, saved and run from the top in a
+`r glossary("fresh R session")` (*Session → Restart R*), produces the table
+and the plot without error.
+
+**If it goes wrong:** delete the last suggestion you accepted, and write a more
+specific comment naming the data frame and its columns.
+
+`r hide("An example")`
+
+```{r, eval = FALSE}
+# Voles metabolism trial: effect of treatment on body mass
+library(tidyverse)
+library(here)
+
+voles <- read_csv(
+  here("data", "raw", "voles_metabolism.csv"),
+  col_types = cols(
+    subject_id = col_character(),
+    sex = col_character(),
+    treatment_arm = col_character(),
+    mass_pre_g = col_double(),
+    mass_post_g = col_double(),
+    metabolic_rate_post = col_double()
+  )
+) |>
+  mutate(mass_change_g = mass_post_g - mass_pre_g)
+
+# mean and SD of mass_change_g by treatment_arm and sex, with n per cell
+voles |>
+  summarise(
+    mean_change_g = mean(mass_change_g),
+    sd_change_g = sd(mass_change_g),
+    n = n(),
+    .by = c(treatment_arm, sex)
+  ) |>
+  arrange(treatment_arm, sex)
+
+# mass_change_g against metabolic_rate_post, coloured by treatment_arm
+ggplot(voles, aes(metabolic_rate_post, mass_change_g, colour = treatment_arm)) +
+  geom_point() +
+  labs(x = "Metabolic rate (post-treatment)", y = "Change in mass (g)")
+```
+
+The plot drops the one animal with no metabolic rate and says so in a warning:
+read it rather than ignore it.
+
+`r unhide()`
+
+::::
+:::
+
+
+:::{.callout-note}
+## Check · Reproduce · Record
+
+- **You can now:** steer inline completion with a specific comment and the
+  right code above the cursor, **trusted because** you decided on every
+  suggestion and your script runs from a fresh R session.
+- **Check:** accept, modify or reject every suggestion deliberately.
+- **Reproduce:** good suggestions come from context in the file, so keep that
+  context in your script, where it reruns.
+- **Record:** nothing to log for practice code in `scratch/`. When completions
+  write code you keep, add a line to your `r glossary("AI-use log")`, in the
+  form from [Block 3](11d-context-disclosure-autonomy.qmd).
+:::
+
+
+## Check your understanding
+
+**The single most reliable way to improve inline suggestions in a new script
+is to:**
+
+`r longmcq(c(
+  "Switch to a different underlying model",
+  "Open more files in the editor as additional context",
+  answer = "Load the data in the script above the cursor, then write a specific comment naming the data frame and its columns",
+  "Restart the IDE so the assistant has a fresh context"
+))`
+
+**You have `voles` loaded in your R session, but in an empty script Copilot's
+suggestion uses made-up column names. The most likely reason is:**
+
+`r longmcq(c(
+  "Copilot cannot read R code",
+  answer = "Copilot sees the code in your editor, not the objects in your R session",
+  "Copilot reads new objects only after R is restarted",
+  "The data frame has too many rows for Copilot to read"
+))`
+
+
+## Going further
+
+This material goes beyond the two activities. Work through it if it is useful
+to you.
+
+:::{.callout-tip collapse="true"}
+## The full four-step analysis
+
+The second activity leaves out two steps of the full analysis below: the
+filter (step 1) and the model (step 3).
+Here is the full sequence. As before, write the comment for each step before
+you accept, reject or modify the suggestion:
+
+1. Filter to subjects with non-missing `metabolic_rate_post` and create a
+   derived variable `mass_change_g`.
+2. Produce a summary table of the mean and standard deviation of
+   `mass_change_g` by `treatment_arm` and `sex`, with the number of
+   observations per cell.
+3. Fit a linear model of `metabolic_rate_post` on `treatment_arm` and `sex`.
+   Inspect the coefficients.
+4. Produce one plot relating `mass_change_g` to `metabolic_rate_post`,
+   coloured by `treatment_arm`.
+
+When you have finished steps 2 and 4, compare the code you kept for step 4
+with the plot in *An example* in the second activity. Note whether you
+accepted, changed or rejected Copilot's suggestion. Where the two differ,
+decide which is right and why: suggestions differ between people and between
+attempts, and so, often, do their bugs. If a colleague has worked through the
+same steps, compare your code with theirs too.
+:::
+
+
+## Glossary
+
+```{r}
+#| echo: false
+glossary_table()
+```

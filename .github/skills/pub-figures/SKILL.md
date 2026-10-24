@@ -169,7 +169,7 @@ Before declaring the script complete, confirm:
 - Palette applied via `colorspace::scale_*` functions, not manual hex vectors.
 - Categorical grouping carries redundant encoding (shape or linetype).
 - Statistical annotations sourced from a model object in the active session.
-- Default theme is `theme_minimal()`, `theme_classic()`, or the project theme function. Never `theme_grey()`.
+- Default theme is the or the project theme function, otherwise use `theme_minimal()`, `theme_classic()`. Never `theme_grey()`.
 - File saved to `outputs/figures/` as both PDF and PNG with explicit dimensions.
 - `cvdPlot()` call inserted at the end of the script with a comment flagging it for the investigator.
 

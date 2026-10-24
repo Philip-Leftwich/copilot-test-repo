@@ -1,0 +1,449 @@
+# Block 2: Debugging with AI {.unnumbered}
+
+```{r}
+#| include: false
+source("R/booktem_setup.R")
+source("R/my_setup.R")
+library(tidyverse)
+library(here)
+library(webexercises)
+```
+
+AI is a fast debugging partner for code you wrote yourself, because you can
+judge its answer against what you meant. You fix two bugs that raise no error:
+one the data reveal, and one that only your knowledge of the study catches.
+
+*⏱ ~20 minutes · Start on `main`, Git pane clean, Claude Code running in Manual mode.*
+
+:::{#block2-files .callout-note collapse="true"}
+## This block's files, and how it fits
+
+This is the first live block in your workshop repository
+([setup](11a-setup-claude-code.qmd#your-workshop-repository)). The code you fix
+is practice, so it goes in the git-ignored `scratch/` folder. There is no
+checkpoint branch, because nothing later depends on it. *Going further* has a
+bug the AI can fix alone: a misspelt function name.
+
+| File | Where it comes from | Used in |
+|---|---|---|
+| `data/raw/voles_metabolism.csv` | Shipped with the template: 72 voles, 24 per treatment arm | Both exercises |
+| `AGENTS.md` | Shipped with the template; Claude Code reads it at the start of every conversation | Exercise 1, step 3: the line you did not ask for |
+| `scratch/debugging.R` | You create it, in Exercise 1, step 1 | Both exercises |
+:::
+
+## Exercise 1: A logic error
+
+:::{.task}
+::::{.task-header}
+A logic error (12 minutes)
+::::
+::::{.task-container}
+
+**Goal:** find a bug that raises no error by inspecting the data first, so that
+you can check the agent's diagnosis against evidence you have seen yourself.
+
+**Start state:** your workshop repository on `main`; Claude Code in Manual
+mode, with a new conversation (`/clear`).
+
+:::{.callout-tip collapse="true"}
+## Using another tool
+
+**Posit Assistant:** type `/ask` first. Ask mode is read-only: it cannot edit
+files or run R code, so the answer-only line is not needed. It does see the
+names and types of the objects in your session (not their values). It can also
+read your console history, so it may already have your `distinct()` output.
+That is a disclosure route too ([Block 3](11d-context-disclosure-autonomy.qmd)).
+For step 4, type `/normal` so it can run the diagnostics in your live R
+session, and approve each call. `/normal` is also how you leave Ask mode.
+
+**A chat window:** paste the same prompts, without the answer-only line, and
+skip step 4.
+:::
+
+**1. Set up.** In the R console, run `usethis::edit_file("scratch/debugging.R")`.
+It creates this block's practice script and opens it. Paste this in and run
+it. The last two commands are code you wrote to compute mean post-treatment
+mass for high-dose voles:
+
+```{r}
+#| eval: false
+library(tidyverse)
+library(here)
+voles <- read_csv(here("data", "raw", "voles_metabolism.csv"))
+
+high_dose <- voles |>
+  filter(treatment_arm == "high_dose")
+
+high_dose |>
+  summarise(mean_mass = mean(mass_post_g))
+```
+
+It runs without error but returns `NaN`. The bug is in what you asked for. Put
+the evidence in front of you first, then in front of the
+`r glossary("assistant")`.
+
+**2. Inspect the data before asking for help.** In the R console:
+
+```{r}
+#| eval: false
+voles |> distinct(treatment_arm)
+voles |> count(treatment_arm)
+nrow(high_dose)
+```
+
+The values are `Control`, `Low_dose` and `High_dose`, and `nrow()` is zero: you
+have found the bug yourself in seconds.
+
+**3. Ask with the evidence in hand.** Paste the code and the diagnostic output
+together, so that the answer rests on the real values, not a guess.
+
+**Prompt (Claude Code):**
+
+```text
+I am trying to compute mean post-treatment mass for high-dose voles.
+My code:
+
+  high_dose <- voles |>
+    filter(treatment_arm == "high_dose")
+
+  high_dose |>
+    summarise(mean_mass = mean(mass_post_g))
+
+returns NaN. But voles |> distinct(treatment_arm) returns
+"Control", "Low_dose", "High_dose". I think the filter fails because of
+the capitalisation. Is that the only problem?
+Answer from what I've pasted: don't read files, run code or edit anything.
+```
+
+If it asks to run a command or edit a file despite the last line, choose
+**No**. **Answer each request with plain Yes or No.** Never
+choose an option that says *don't ask again*: it saves a rule that skips the
+question from then on. Ignore a first line `# agents-md: active v1` in its
+code: [Block 4](11e-instructions-skills.qmd) explains it.
+
+:::{.callout-note collapse="true"}
+## How it works: asking an agent only to answer
+
+Claude Code is an `r glossary("agent")`: given a question, it may search your
+project, read files and offer to run code. The answer-only line is only a
+request. Claude Code has no ask mode. Plan mode is not used here, because it
+still reads your files while it plans. Manual mode is the control: Claude Code
+must ask before it runs a command or edits a file, and your answer decides.
+
+Claude Code cannot see the objects in your R console, such as `voles`. It sees
+your data only by reading files or running code. Each `Rscript` command it
+runs starts a fresh R process. Check its work in the R console
+([checking work](11a-setup-claude-code.qmd#checking-work)).
+:::
+
+**4. Now let the agent gather the evidence.** This is the one step in the block
+where it acts. Type `/clear` so that it starts without the evidence you
+pasted, then send this prompt:
+
+**Prompt (Claude Code):**
+
+```text
+Read data/raw/voles_metabolism.csv and run R code with Rscript to find why
+filtering treatment_arm for "high_dose" returns no rows. Don't edit any files.
+Show each command and its output.
+```
+
+It reads the file without asking (reading needs no approval), but asks before
+it runs R. Approve a run only if you can say what it does and why you want it
+now; refusing is always safe. Here you can, so choose **Yes** if the `Rscript`
+command only reads the data and prints results. Then compare its diagnosis with
+yours from step 2.
+
+**5. Fix it.** Correct the filter in `scratch/debugging.R` and run it again.
+
+**Keep this conversation open:** in Block 3 you read its transcript to see what
+reached the model provider.
+
+`r hide("Solution")`
+
+```{r, eval = FALSE}
+high_dose <- voles |>
+  filter(treatment_arm == "High_dose")
+
+high_dose |>
+  summarise(mean_mass = mean(mass_post_g, na.rm = TRUE))
+```
+
+The filter now matches the data. `na.rm = TRUE` is a precaution for real data,
+which usually have missing values.
+
+`r unhide()`
+
+**You are done when** `nrow(high_dose)` is 24, the mean is a number, not
+`NaN`, and the agent's diagnosis in step 4 matches yours from step 2.
+
+**If it goes wrong:** if `nrow()` is still zero, run
+`voles |> distinct(treatment_arm)` again and copy the value exactly as printed.
+
+::::
+:::
+
+
+## Exercise 2: A correct-looking but wrong result
+
+:::{.task}
+::::{.task-header}
+A correct-looking but wrong result (8 minutes)
+::::
+::::{.task-container}
+
+**Goal:** catch a result that runs cleanly but is wrong by stating the expected
+answer before you ask, so that a plausible but wrong number does not reach your
+results.
+
+**Start state:** `scratch/debugging.R` is open with `voles` loaded. Ask in
+Exercise 1's conversation, without `/clear`, so that its transcript is still
+there for Block 3.
+
+You wrote this to get the mean change in body mass by treatment arm. Paste it
+into `scratch/debugging.R` and run it:
+
+```{r}
+#| eval: false
+voles |>
+  mutate(mass_change_g = mass_pre_g - mass_post_g) |>
+  summarise(mean_change = mean(mass_change_g), .by = treatment_arm)
+```
+
+It runs, and the numbers look plausible. But the treatment was designed to
+increase mass, and they say mass falls. Only your knowledge of the study
+reveals the error: an AI catches it only if you tell it what the answer should
+be.
+
+**1. Write down what a correct result should look like, then compare.** Here:
+positive values, rising from Control to High_dose. The mismatch is the
+diagnosis.
+
+**2. Ask for a second opinion, stating the expected direction.**
+
+**Prompt (Claude Code):**
+
+```text
+This should show mass gain increasing with dose, but the values are negative
+and decreasing. What is wrong?
+
+  voles |>
+    mutate(mass_change_g = mass_pre_g - mass_post_g) |>
+    summarise(mean_change = mean(mass_change_g), .by = treatment_arm)
+
+Answer from what I've pasted: don't read files, run code or edit anything.
+```
+
+**3. Fix it.** Correct the subtraction in `scratch/debugging.R` and run it
+again.
+
+`r hide("Solution")`
+
+```{r, eval = FALSE}
+voles |>
+  mutate(mass_change_g = mass_post_g - mass_pre_g) |>
+  summarise(mean_change = mean(mass_change_g), .by = treatment_arm)
+```
+
+`mass_change_g` is post minus pre: gain, not loss. The original ran without
+complaint because subtraction works in either direction.
+
+`r unhide()`
+
+**You are done when** your corrected means are positive and increase from
+Control to High_dose, as you predicted in step 1.
+
+**If it goes wrong:** if the values are still negative, check which mass you
+subtract from which: post minus pre is gain.
+
+::::
+:::
+
+
+**When AI helps most.** AI helps most when you give it the evidence (the error,
+the data values) and say what the result should be. It cannot know your study
+design unless you tell it: that is why Exercise 2's prompt states the expected
+direction.
+
+:::{.callout-note collapse="true"}
+## The debugging checklist
+
+Inspect the data first, ask the AI second.
+
+1. **Read the error in full:** the function name and the phrase usually locate
+   the bug.
+2. **Inspect the data:** `glimpse()`, `distinct()`, `summary()`, and `nrow()`
+   after a filter.
+3. **Check names exactly,** including capitals and underscores.
+4. **Then ask,** giving the code, the error and the diagnostic output together.
+   Ask for an answer, not an action, until you have the evidence.
+5. **Explain the fix in one sentence** before you accept it.
+6. **Before trusting a clean run,** state what the result should look like
+   (sign, size, order) and compare.
+:::
+
+:::{.callout-note}
+## Check · Reproduce · Record
+
+- **You can now:** use an assistant to diagnose and fix errors in your own
+  code, **trusted because** you inspect the data first and explain each fix in
+  a sentence.
+- **Check:** before trusting a clean run, state the sign and size the result
+  should have, and compare.
+- **Reproduce:** rerun the fixed code in a `r glossary("fresh R session")`, so
+  it does not depend on a leftover object.
+- **Record:** nothing to log yet; the AI-use log starts in
+  [Block 3](11d-context-disclosure-autonomy.qmd).
+:::
+
+
+## Check your understanding
+
+**A filter returns zero rows and the summary is `NaN`, with no error. What
+should you do before asking an AI?**
+
+`r longmcq(c(
+  "Paste the NaN output into a chat window and ask what is wrong",
+  answer = "Inspect the data, for example with distinct() on the filtered column, so you can give the assistant the evidence",
+  "Reinstall dplyr",
+  "Add na.rm = TRUE and run it again"
+))`
+
+**Code runs without error and returns plausible numbers. What is the most
+reliable first check?**
+
+`r longmcq(c(
+  "Ask an AI whether the code is correct",
+  "Run the code again to confirm the output is stable",
+  answer = "Write down what the result should look like from the study design, then compare",
+  "Check that there are no warnings"
+))`
+
+**True or false: an AI given only your code will notice that the sign of a
+result contradicts your study design.** `r torf(FALSE)`
+
+
+## Going further (not covered live)
+
+This material is not covered in the live session. Work through it afterwards if
+it is useful to you.
+
+:::{.callout-tip collapse="true"}
+## A misspelt function name (self-study)
+
+**Goal:** fix an error with Claude Code's help and explain the fix in one
+sentence, so that you accept only a fix you understand.
+
+**Start state:** `scratch/debugging.R` is open with `voles` loaded, and Claude
+Code has a new conversation (`/clear`). During the workshop, wait until after
+Block 3, which reads Exercise 1's conversation.
+
+You wrote this in `scratch/debugging.R` to count voles per treatment:
+
+```{r}
+#| eval: false
+ggplot(voles, aes(x = treatment_arm)) +
+  geom_barchart()
+```
+
+R returns:
+
+```
+Error in geom_barchart() : could not find function "geom_barchart"
+```
+
+**1. Ask for a fix.** Paste the code and the error, then ask.
+
+**Prompt (Claude Code):**
+
+```text
+This code gives an error:
+
+  ggplot(voles, aes(x = treatment_arm)) +
+    geom_barchart()
+
+Error in geom_barchart() : could not find function "geom_barchart"
+
+What is wrong, and what is the fix?
+Answer from what I've pasted: don't read files, run code or edit anything.
+```
+
+**2. Explain it before you accept it.** Write one sentence saying why the
+original failed. If you can write it, you understood the fix; that sentence is
+your check.
+
+`r hide("Solution")`
+
+```{r, eval = FALSE}
+ggplot(voles, aes(x = treatment_arm)) +
+  geom_bar()
+```
+
+The function is `geom_bar()`; ggplot2's geoms have no `_chart` suffix. This is
+not a syntax error. R parses the code without complaint. It fails only when it
+looks for a function called `geom_barchart()` and finds none. "Could not find
+function" means no loaded package has a function of that name.
+
+`r unhide()`
+
+**You are done when** the corrected plot draws a bar for each treatment arm, and
+you have written your one-sentence explanation.
+
+**If it goes wrong:** if the fix produces a different error, paste that error
+back in the same conversation; the assistant now has two clues.
+:::
+
+:::{.callout-tip collapse="true"}
+## An aesthetic-mapping error
+
+This error needs ggplot2's grammar rather than the data. You wanted a scatter
+plot of post-treatment metabolic rate against post-treatment mass, coloured by
+treatment arm:
+
+```{r}
+#| eval: false
+ggplot(voles, aes(x = mass_post_g, y = metabolic_rate_post)) +
+  geom_point(color = treatment_arm) +
+  labs(title = "Metabolic rate by mass")
+```
+
+R returns an error saying that object `treatment_arm` was not found. The exact
+wording varies between ggplot2 versions.
+
+**1. Ask for a fix.** Before accepting it, write one sentence on why ggplot2
+could not find `treatment_arm`.
+
+`r hide("Solution")`
+
+```{r, eval = FALSE}
+ggplot(voles, aes(x = mass_post_g, y = metabolic_rate_post)) +
+  geom_point(aes(colour = treatment_arm)) +
+  labs(title = "Metabolic rate by mass")
+```
+
+`treatment_arm` is a column in the data, so the mapping must go inside `aes()`.
+An argument outside `aes()`, such as `color =`, expects a fixed value like
+`"red"` or `"#0072B2"`. R looked for an object called `treatment_arm` in
+your environment, found none, and stopped. `colour` and `color` are
+interchangeable in ggplot2.
+
+`r unhide()`
+
+**When ggplot2 reports that a column such as `treatment_arm` was not found, the
+most common cause is:**
+
+`r longmcq(c(
+  "The data argument was supplied incorrectly",
+  answer = "A column name was used outside aes(), where ggplot2 expected a fixed value",
+  "The ggplot2 package is not loaded",
+  "The variable contains missing values"
+))`
+:::
+
+
+## Glossary
+
+```{r}
+#| echo: false
+glossary_table()
+```

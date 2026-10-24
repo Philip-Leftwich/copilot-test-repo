@@ -9,3 +9,9 @@ metabolic_summary <- voles |>
     n         = n(),
     .groups   = "drop"
   )
+
+model <- lm(mass_post_g ~ treatment_arm, data = voles)
+
+
+
+

@@ -5,7 +5,9 @@ library(tidyverse)
 library(here)
 source(here("scripts", "functions", "load_voles.R"))
 
-voles <- load_voles()
+voles <- load_voles() |>
+  # change in body mass over the treatment: positive means a gain
+  mutate(mass_change_g = mass_post_g - mass_pre_g)
 
 # how many animals per treatment arm and sex
 voles |>

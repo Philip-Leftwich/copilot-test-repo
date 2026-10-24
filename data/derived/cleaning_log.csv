@@ -1,0 +1,10 @@
+raw_row,subject_id,column,old_value,new_value,rule
+5,V005,mass_post_g,9999,,missing_code
+12,V012,metabolic_rate_post,-1,,missing_code
+20,V020,treatment_arm,control,Control,label_recode
+27,V027,mass_pre_g,0.0332,,out_of_range_query
+34,V033,treatment_arm,LOW_DOSE,Low_dose,label_recode
+42,V041,mass_post_g,9999,,missing_code
+52,V15,subject_id,V15,V015,id_format
+60,V058,sex,male,M,label_recode
+66,V064,mass_pre_g,271,,out_of_range_query

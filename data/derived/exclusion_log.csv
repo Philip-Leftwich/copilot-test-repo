@@ -1,0 +1,3 @@
+raw_row,subject_id,reason
+31,V007,exact duplicate of raw row 7
+52,V15,duplicate subject_id after ID formatting; same animal as raw row 15

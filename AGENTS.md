@@ -17,9 +17,7 @@ When you write or edit R code, make the first line of the first code block:
 - Read CSV files with readr and explicit col_types.
 
 ## Reproducibility
-- Packages are managed with renv. Do not call install.packages(); ask before
-  adding a package.
-- Do not edit renv.lock.
+- Do not call install.packages(); ask before adding a package.
 - Set a seed immediately before any random step.
 - Every script must run in a fresh R session.
 - Before you report a task done, run each new script once with Rscript from

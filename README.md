@@ -37,6 +37,31 @@ are the ones the tests were run with. If a test fails, compare yours with
 | tidyverse | 2.0.0 |
 | usethis | 3.2.1 |
 
+## Run order, inputs and outputs
+
+Run each script from the project root in a fresh R session, for example
+`Rscript scripts/05_analysis.R`. Packages are attached by
+`scripts/00_packages.R`, which every script and test sources.
+
+| Script | Reads | Writes |
+|---|---|---|
+| `scripts/00_profile.R` | `data/raw/voles_raw.csv` | `docs/profile*.csv` |
+| `scripts/02_validate.R` | `data/raw/voles_raw.csv`; `data/derived/voles_clean.csv` if present | console only |
+| `scripts/03_audit_cleaning.R` | `data/derived/cleaning_log.csv` (made by a cleaning step that is not on this branch) | console only |
+| `scripts/04_load_data.R` | `data/raw/voles_metabolism.csv` | object `voles` |
+| `scripts/05_analysis.R` | `voles` from `04_load_data.R` | object `metabolic_summary` |
+| `scripts/explore_voles.R` | `data/raw/voles_metabolism.csv` | console only |
+| `scripts/explore_mass_change_plot.R` | `data/raw/voles_metabolism.csv` | `outputs/mass_change_by_arm.png` |
+| `scripts/fig_house.R` | `data/raw/voles_metabolism.csv` | `outputs/fig_house_mass_post.png` |
+
+`tests/test_analysis_script.R` checks that `05_analysis.R` still reproduces
+the reference captured in `tests/fixtures/metabolic_summary.rds`.
+
+## LLM use
+
+AI assistants helped write and refactor code in this repository; see
+`docs/ai-log.md` for each piece of work.
+
 ## If you fall behind
 
 Commit or discard your changes, then switch branch from the Git pane:
